@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: barbearia-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/barbearia}
+    username: ${DB_USER:barbearia}
+    password: ${DB_PASS:barbearia}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false

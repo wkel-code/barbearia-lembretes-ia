@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: barbearia
+      POSTGRES_USER: barbearia
+      POSTGRES_PASSWORD: barbearia
+    volumes: [ pgdata:/var/lib/postgresql/data ]
+    ports: [ "5432:5432" ]
+
+  api:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/barbearia
+    depends_on: [ db ]
+    ports: [ "8080:8080" ]
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+    volumes: [ n8n_data:/home/node/.n8n ]
+    ports: [ "5678:5678" ]
+
+volumes:
+  pgdata:
+  n8n_data:
