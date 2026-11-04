@@ -1,0 +1,233 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        0
+      ],
+      "id": "a6262323-a354-4a63-9cff-f020a34887b5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Serviço: {{ $json.servico }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Você escreve uma única frase curta e acolhedora, em português do Brasil, para complementar uma mensagem de confirmação de agendamento de barbearia. Máximo 2 linhas e no máximo 1 emoji. Não cite nomes, datas, horários, preços, endereços nem links. Varie o estilo a cada resposta. Responda apenas com a frase."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "cb1cd4c1-d79b-4f6e-8aaa-b96aa72d2395",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.8-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        192
+      ],
+      "id": "4b363ad5-a03d-4f57-8c68-0810fc466115",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GbxKxo2lHqpyVFV3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5fba35b-a1a3-45f1-bcee-6d64d8352261",
+              "name": "mensagem",
+              "value": "=Olá {{ $('Agendamentos').item.json.nomeCliente }}, tudo bem? {{ $json.text }}\n\nPodemos confirmar seu agendamento:\n* Barbeiro: {{ $('Agendamentos').item.json.barbeiro }}\n* Data: {{ DateTime.fromISO($('Agendamentos').item.json.dataHora).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}\n\nCaso precise de ajustes, estamos à disposição.\n\nConfirme através deste link:\nhttps://exemplo.com/confirmacao/{{ $('Agendamentos').item.json.agendamentoId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ true }}",
+        "include": "=all",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        384,
+        0
+      ],
+      "id": "dd1eea71-efbe-453e-9660-f4cb98ca4eb3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8080/agendamentos/pendentes-lembrete",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "3e1ce13f-f7fa-4293-8f24-6c1e92e5f772",
+      "name": "Agendamentos"
+    },
+    {
+      "parameters": {
+        "chatId": "SEU_CHAT_ID",
+        "text": "={{ $json.mensagem }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        0
+      ],
+      "id": "8df2675c-2a6c-4dda-8dae-26c47b20792f",
+      "name": "Send a text message",
+      "webhookId": "a12b7cfa-0806-4cbb-ab5e-b04870baa478",
+      "credentials": {
+        "telegramApi": {
+          "id": "1m4tnbitd0vdkZfW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://host.docker.internal:8080/agendamentos/{{ $('Agendamentos').item.json.agendamentoId }}/lembrete-enviado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        832,
+        0
+      ],
+      "id": "144da2e6-74b0-4544-9000-63aaaea6c36d",
+      "name": "MarcarEnviado"
+    }
+  ],
+  "pinData": {
+    "Basic LLM Chain": [
+      {
+        "json": {
+          "text": "Esperamos você por aqui! 😊"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agendamentos": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "MarcarEnviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "d287f31b-2da7-43a4-9f9d-7fbf5178ff63",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d8513630732cf4844795be0d3c03590472a878b0080f6152e2b47fa2a04b77b8"
+  },
+  "nodeGroups": [],
+  "id": "nU6V0IhCrCS18ENT",
+  "tags": []
+}
