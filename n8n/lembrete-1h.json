@@ -1,0 +1,226 @@
+{
+  "name": "Lembrete 1 hora",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        0
+      ],
+      "id": "1b5ada38-a6a2-4748-ad22-19897ed57bda",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5fba35b-a1a3-45f1-bcee-6d64d8352261",
+              "name": "mensagem",
+              "value": "=Olá {{ $json.nomeCliente }}! Falta 1 hora para o seu horário. Aguardamos por você! 💈",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ true }}",
+        "include": "=all",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "db6e589e-f2ce-46a8-980f-75ac97069867",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "http://api:8080/agendamentos/pendentes-lembrete-1h",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "0f62068c-43e5-472b-916c-02e4e6133da3",
+      "name": "Agendamentos"
+    },
+    {
+      "parameters": {
+        "chatId": "SEU_CHAT_ID",
+        "text": "={{ $json.mensagem }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        0
+      ],
+      "id": "eba48b55-7db0-4920-ab7f-7cf276148815",
+      "name": "Send a text message",
+      "webhookId": "344c5388-96a1-4591-8a05-ecde3aad7648",
+      "credentials": {
+        "telegramApi": {
+          "id": "1m4tnbitd0vdkZfW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://api:8080/agendamentos/{{ $('Agendamentos').item.json.agendamentoId }}/lembrete-1h-enviado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        576,
+        0
+      ],
+      "id": "ec355d53-bde5-4778-9b23-2da9bbf3c531",
+      "name": "MarcarEnviado"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -512,
+        224
+      ],
+      "id": "126d3e38-0460-4a43-a6a4-104e11385487",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/lembretes-log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"agendamentoId\": {{ $('Agendamentos').item.json.agendamentoId }},\n  \"tipo\": \"LEMBRETE_1H\",\n  \"mensagem\": {{ JSON.stringify($('Edit Fields').item.json.mensagem) }},\n  \"statusEnvio\": \"ENVIADO\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        0
+      ],
+      "id": "56361713-596b-4f62-a778-705e3c270a19",
+      "name": "GravarLog"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agendamentos": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "MarcarEnviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarcarEnviado": {
+      "main": [
+        [
+          {
+            "node": "GravarLog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "America/Sao_Paulo"
+  },
+  "versionId": "ab2166f3-b079-45cf-a8e3-0b8472810357",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d8513630732cf4844795be0d3c03590472a878b0080f6152e2b47fa2a04b77b8"
+  },
+  "nodeGroups": [],
+  "id": "ifqyPXr6JtXP6NCF",
+  "tags": [
+    {
+      "updatedAt": "2026-11-04T20:35:37.024Z",
+      "createdAt": "2026-11-04T20:35:37.024Z",
+      "id": "PVPPFOSZIHcIA6jW",
+      "name": "Lembrete 1h"
+    }
+  ]
+}

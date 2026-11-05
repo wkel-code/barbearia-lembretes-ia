@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "Confirmação 17h",
   "nodes": [
     {
       "parameters": {},
@@ -34,7 +34,8 @@
       "id": "cb1cd4c1-d79b-4f6e-8aaa-b96aa72d2395",
       "name": "Basic LLM Chain",
       "retryOnFail": true,
-      "waitBetweenTries": 2000,
+      "waitBetweenTries": 5000,
+      "maxTries": 2,
       "onError": "continueRegularOutput"
     },
     {
@@ -64,7 +65,7 @@
             {
               "id": "f5fba35b-a1a3-45f1-bcee-6d64d8352261",
               "name": "mensagem",
-              "value": "=Olá {{ $('Agendamentos').item.json.nomeCliente }}, tudo bem? {{ $json.text }}\n\nPodemos confirmar seu agendamento:\n* Barbeiro: {{ $('Agendamentos').item.json.barbeiro }}\n* Data: {{ DateTime.fromISO($('Agendamentos').item.json.dataHora).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}\n\nCaso precise de ajustes, estamos à disposição.\n\nConfirme através deste link:\nhttps://exemplo.com/confirmacao/{{ $('Agendamentos').item.json.agendamentoId }}",
+              "value": "=Olá {{ $('Agendamentos').item.json.nomeCliente }}, tudo bem? {{ $json.text ?? 'Esperamos você por aqui! 😊' }}\n\nPodemos confirmar seu agendamento:\n* Barbeiro: {{ $('Agendamentos').item.json.barbeiro }}\n* Data: {{ DateTime.fromISO($('Agendamentos').item.json.dataHora).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}\n\nCaso precise de ajustes, estamos à disposição.\n\nConfirme através deste link:\nhttps://exemplo.com/confirmacao/{{ $('Agendamentos').item.json.agendamentoId }}",
               "type": "string"
             }
           ]
@@ -84,7 +85,7 @@
     },
     {
       "parameters": {
-        "url": "http://host.docker.internal:8080/agendamentos/pendentes-lembrete",
+        "url": "http://api:8080/agendamentos/pendentes-confirmacao",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -121,7 +122,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=http://host.docker.internal:8080/agendamentos/{{ $('Agendamentos').item.json.agendamentoId }}/lembrete-enviado",
+        "url": "=http://api:8080/agendamentos/{{ $('Agendamentos').item.json.agendamentoId }}/confirmacao-enviada",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -132,17 +133,47 @@
       ],
       "id": "144da2e6-74b0-4544-9000-63aaaea6c36d",
       "name": "MarcarEnviado"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 17 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -480,
+        256
+      ],
+      "id": "870e00fd-1270-4527-9a7d-64ccdf9e7074",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/lembretes-log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"agendamentoId\": {{ $('Agendamentos').item.json.agendamentoId }},\n  \"tipo\": \"CONFIRMACAO\",\n  \"mensagem\": {{ JSON.stringify($('Edit Fields').item.json.mensagem) }},\n  \"modelo\": \"gemini\",\n  \"statusEnvio\": \"ENVIADO\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "d4cc83bf-4a02-45e5-a017-366c84da9d41",
+      "name": "GravarLog"
     }
   ],
-  "pinData": {
-    "Basic LLM Chain": [
-      {
-        "json": {
-          "text": "Esperamos você por aqui! 😊"
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "When clicking ‘Execute workflow’": {
       "main": [
@@ -209,6 +240,28 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarcarEnviado": {
+      "main": [
+        [
+          {
+            "node": "GravarLog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -220,9 +273,10 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timezone": "America/Sao_Paulo"
   },
-  "versionId": "d287f31b-2da7-43a4-9f9d-7fbf5178ff63",
+  "versionId": "b6a69fce-3577-4e6d-9144-5e008543060f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "d8513630732cf4844795be0d3c03590472a878b0080f6152e2b47fa2a04b77b8"
