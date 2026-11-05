@@ -3,6 +3,7 @@ package com.raquel.barbearia.api.dto;
 import com.raquel.barbearia.api.domain.Agendamento;
 import com.raquel.barbearia.api.domain.Cliente;
 import com.raquel.barbearia.api.domain.StatusAgendamento;
+import com.raquel.barbearia.api.domain.TipoLembrete;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -48,4 +49,13 @@ public final class Dtos {
     }
 
     public record StatusRequest(@NotNull StatusAgendamento status) {}
+
+    public record LogRequest(
+            @NotNull Long agendamentoId,
+            @NotNull TipoLembrete tipo,
+            String mensagem,
+            @Size(max = 50) String modelo,
+            Integer tokens,
+            @NotBlank @Size(max = 20) String statusEnvio,
+            String erro) {}
 }

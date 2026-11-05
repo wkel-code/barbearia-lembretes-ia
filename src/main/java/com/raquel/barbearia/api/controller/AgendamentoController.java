@@ -34,15 +34,26 @@ public class AgendamentoController {
         return service.criar(req);
     }
 
-    @GetMapping("/pendentes-lembrete")
-    public List<LembreteResponse> pendentes() {
-        return service.pendentesDeLembrete();
+    @GetMapping("/pendentes-confirmacao")
+    public List<LembreteResponse> pendentesConfirmacao() {
+        return service.pendentesDeConfirmacao();
     }
 
-    @PatchMapping("/{id}/lembrete-enviado")
+    @GetMapping("/pendentes-lembrete-1h")
+    public List<LembreteResponse> pendentesLembrete1h() {
+        return service.pendentesDeLembrete1h();
+    }
+
+    @PatchMapping("/{id}/confirmacao-enviada")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void lembreteEnviado(@PathVariable Long id) {
-        service.marcarLembreteEnviado(id);
+    public void confirmacaoEnviada(@PathVariable Long id) {
+        service.marcarConfirmacaoEnviada(id);
+    }
+
+    @PatchMapping("/{id}/lembrete-1h-enviado")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void lembrete1hEnviado(@PathVariable Long id) {
+        service.marcarLembrete1hEnviado(id);
     }
 
     @PatchMapping("/{id}/status")

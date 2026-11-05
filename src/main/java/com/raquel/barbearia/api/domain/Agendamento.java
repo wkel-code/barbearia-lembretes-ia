@@ -21,14 +21,18 @@ public class Agendamento {
     @Column(length = 80)
     private String barbeiro;
 
-    @Column(nullable = false)
+    @Column(name = "data_hora", nullable = false)
     private OffsetDateTime dataHora;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private StatusAgendamento status = StatusAgendamento.AGENDADO;
 
-    private OffsetDateTime lembreteEnviadoEm;
+    @Column(name = "confirmacao_enviada_em")
+    private OffsetDateTime confirmacaoEnviadaEm;
+
+    @Column(name = "lembrete_1h_enviado_em")
+    private OffsetDateTime lembrete1hEnviadoEm;
 
     protected Agendamento() {}
 
@@ -39,7 +43,8 @@ public class Agendamento {
         this.dataHora = dataHora;
     }
 
-    public void marcarLembreteEnviado() { this.lembreteEnviadoEm = OffsetDateTime.now(); }
+    public void marcarConfirmacaoEnviada() { this.confirmacaoEnviadaEm = OffsetDateTime.now(); }
+    public void marcarLembrete1hEnviado() { this.lembrete1hEnviadoEm = OffsetDateTime.now(); }
     public void alterarStatus(StatusAgendamento novo) { this.status = novo; }
 
     public Long getId() { return id; }
@@ -48,5 +53,6 @@ public class Agendamento {
     public String getBarbeiro() { return barbeiro; }
     public OffsetDateTime getDataHora() { return dataHora; }
     public StatusAgendamento getStatus() { return status; }
-    public OffsetDateTime getLembreteEnviadoEm() { return lembreteEnviadoEm; }
+    public OffsetDateTime getConfirmacaoEnviadaEm() { return confirmacaoEnviadaEm; }
+    public OffsetDateTime getLembrete1hEnviadoEm() { return lembrete1hEnviadoEm; }
 }

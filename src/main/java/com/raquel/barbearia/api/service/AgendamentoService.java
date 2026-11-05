@@ -13,11 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 public class AgendamentoService {
+
+    private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
 
     private final AgendamentoRepository agendamentos;
     private final ClienteRepository clientes;
@@ -37,15 +41,31 @@ public class AgendamentoService {
     }
 
     @Transactional(readOnly = true)
-    public List<LembreteResponse> pendentesDeLembrete() {
+    public List<LembreteResponse> pendentesDeConfirmacao() {
+        LocalDate amanha = LocalDate.now(FUSO).plusDays(1);
+        OffsetDateTime inicio = amanha.atStartOfDay(FUSO).toOffsetDateTime();
+        OffsetDateTime fim = amanha.plusDays(1).atStartOfDay(FUSO).toOffsetDateTime();
+        return agendamentos.buscarParaConfirmacao(inicio, fim)
+                .stream().map(LembreteResponse::de).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LembreteResponse> pendentesDeLembrete1h() {
         OffsetDateTime agora = OffsetDateTime.now();
-        return agendamentos.buscarPendentes(agora, agora.plusHours(24))
+        return agendamentos.buscarParaLembrete1h(
+                        agora.plusMinutes(45), agora.plusMinutes(60),
+                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO))
                 .stream().map(LembreteResponse::de).toList();
     }
 
     @Transactional
-    public void marcarLembreteEnviado(Long id) {
-        buscar(id).marcarLembreteEnviado();
+    public void marcarConfirmacaoEnviada(Long id) {
+        buscar(id).marcarConfirmacaoEnviada();
+    }
+
+    @Transactional
+    public void marcarLembrete1hEnviado(Long id) {
+        buscar(id).marcarLembrete1hEnviado();
     }
 
     @Transactional
