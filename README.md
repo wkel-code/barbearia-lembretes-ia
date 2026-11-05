@@ -72,6 +72,20 @@ docker compose up -d --build
 | PATCH | `/agendamentos/{id}/status` | Altera status (ex.: `CANCELADO`) |
 | POST | `/lembretes-log` | Registra um envio |
 
+## Integração com o sistema de agenda
+Este projeto nasceu de uma necessidade real de uma barbearia. Consultei o suporte
+do sistema de gestão que ela usa e a resposta foi que ele **não possui API pública,
+webhooks nem exportação da agenda**; os agendamentos futuros só existem na interface.
+
+Por isso a API deste repositório é independente: recebe agendamentos por `POST /agendamentos`
+e a origem dos dados fica desacoplada do restante do fluxo. Se o fornecedor passar a oferecer
+uma integração ou exportação, basta um adaptador que alimente esses endpoints, sem alterar
+os fluxos do n8n.
+
+Limitação conhecida: sem sincronização em tempo real, o lembrete de 1 hora poderia
+ser enviado a quem cancelou depois da importação. Em um cenário real, é preciso uma fonte
+de dados atualizada antes de ligar esse fluxo.
+
 ## Próximos passos
 - Integração com o sistema de agenda da barbearia (origem real dos agendamentos e do link de confirmação).
 - Envio pela API oficial do WhatsApp Business.
